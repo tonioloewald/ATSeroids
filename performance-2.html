@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Performance Test!</title>
+</head>
+<body>
+	<script>
+		function benchmark( name, fn ){
+			var ts = function(){
+				var d = new Date();
+				return d.getTime();
+			}
+			
+			var start = ts();
+			
+			for( var i = 0; i < 100000; i++ ){
+				fn( i );
+			}
+			
+			var elapsed = ts() - start;
+			
+			elapsed *= 0.001;
+			
+			document.writeln( name + ': ' + elapsed + 's <br>' );
+		}
+		
+		function createFoo(){
+			var foo = {};
+			foo.bar = 'baz';
+			foo.x = 1;
+			foo.y = 2;
+			foo.z = 3;
+			foo.a = 4;
+			foo.b = 5;
+			foo.c = 7;
+			foo.d = 12;
+			foo.frog = "French";
+			foo.bazooka = "Sputnik";
+			return foo;
+		}
+		
+		var foo = createFoo();
+		benchmark( "lookup", function(){
+			if( typeof foo.blah === 'undefined' ){
+				foo['blah'] = 17;
+			}
+			foo['bar'] = foo['blah'] > 10 ? 'yes' : 'no' ;
+		} );
+		
+		function find( obj, prop ){
+			for( var i in obj ){
+				if( i === prop ){
+					return obj[i];
+				}
+			}
+		}
+		
+		var foo = createFoo();
+		benchmark( "find", function(){
+			if( typeof find( foo, 'blah' ) === 'undefined' ){
+				foo.blah = 17;
+			}
+			foo.bar = find( foo, "blah" ) > 10 ? 'yes' : 'no' ;
+		} );
+		
+		benchmark( "compiled", function(p){
+			var f = function( a, b ){ return a * b; }; var x = f( p, 17 );
+		});
+		
+		benchmark( "evaled", function(p){
+			eval('var f = function( a, b ){ return a * b; }; var x = f( p, 17 );');
+		});
+		
+		benchmark( "forced recompile", function(p){
+			eval('var f = function( a, b ){ return a * b; }; var x = f( ' + p + ', 17 );');
+		});
+	</script>
+</body>
+</html>

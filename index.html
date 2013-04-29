@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	</head>
+	<body>
+		<canvas id="space" />
+		<canvas id="collision" />
+		<script src="test.js"></script>
+		<script src="vector.js"></script>
+		<script src="path.js"></script>
+		<script src="sprite.js"></script>
+		<script src="ship.js"></script>
+		<script>
+			var v = new Vector(3,4);
+			console.log( 'VECTOR UNIT TESTS' );
+			assert( 'v.size() == 5' );
+			assert( 'v.mult(2).size() == 10' );
+			assert( 'v.distance( 3, 4 ) == 0' );
+			assert( 'v.rotate(90).equals( new Vector( 4, 3 ) )' );
+			assert( 'v.rotate(-90).equals( new Vector( -4, -3 ) )' );
+			// v.rotate(45).log();
+			assert( 'v.add( 2, 1 ).equals( new Vector( 5, 5 ) )' );
+			
+			console.log( 'PATH UNIT TESTS' );
+			var p;
+			console.log( p = new Path( '<path id="svg_3" d="m203,273l63,-183l66,183l-63,-33l-66,33z" stroke-width="5" stroke="#000000" fill="#FF0000"/>' ) );
+			console.log( p.normalize() );
+			
+			console.log( 'COLLISION UNIT TESTS' );
+			var baseSegment = new Segment( new Vector( 0, 0 ), new Vector( 2, 0 ) );
+			var topSegment = new Segment( new Vector( 0, 2 ), new Vector( 2, 2 ) );
+			var nearVertical = new Segment( new Vector( 0.5, 1 ), new Vector( 1.5, -1 ) );
+			assert( 'baseSegment.intersects( nearVertical ) == true' );
+			assert( 'topSegment.intersects( nearVertical ) == false' );
+			assert( 'nearVertical.intersects( topSegment ) == false' );
+			assert( 'topSegment.intersects( baseSegment ) == false' );
+			var tilt1 = new Segment( new Vector( 0, 0 ), new Vector( 10, 10 ) );
+			var tilt2 = new Segment( new Vector( 0, 0 ), new Vector( 9, 10 ) );
+			var tilt3 = new Segment( new Vector( 0, 1 ), new Vector( 10, 11 ) );
+			assert( 'tilt1.intersects( tilt2 ) == true' );
+			assert( 'tilt1.intersects( tilt3 ) == false' );
+			
+			function setup_canvas( c ){
+				c.style.position = "absolute";
+				c.style.left = "0";
+				c.style.top = "0";
+				c.width = document.documentElement.clientWidth;
+				c.height = document.documentElement.clientHeight;
+				return c.getContext( '2d' );
+			}
+			
+			var canvas = document.getElementById('space');
+			var g = setup_canvas( canvas );
+			
+			var number_of_asteroids = 10;
+			var bounds = new Rect( -35, -35, canvas.width + 70, canvas.height + 70 );
+			// var asteroidPath =  new Path( '<path id="svg_3" d="m203,273l63,-183l66,183l-63,-33l-66,33z" stroke-width="5" stroke="#000000" fill="#FF0000"/>' );
+			var asteroidPath = new Path( '<path id="svg_4" d="m238,46l-77,43l5,61l-42,59l43,87l67,-11l61,32l70,-48l-15,-43l39,-38l-19,-70l-67,-3l-7,-61l-58,-8z" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="5" stroke="#000000" fill="#FF0000"/>' );
+			asteroidPath.normalize();
+			
+			var collision_canvas = document.getElementById('collision');
+			collision_canvas.style.zIndex = "17";
+			var cg = setup_canvas( collision_canvas );
+			
+			var extraLives = [];
+			var ship = new Ship( canvas.width * 0.5, canvas.height * 0.5, bounds );
+			ship.path = new Path( '<path id="svg_3" d="m203,273l63,-183l66,183l-63,-33l-66,33z" stroke-width="5" stroke="#000000" fill="#FF0000"/>' );
+			ship.path = ship.path.normalize().scale(0.25);
+			ship.recalcCollisionRadius();
+			console.log( ship );
+			for( var i = 0; i < 3; i++ ){
+				var life = new Sprite( i * 40 + 30, canvas.height - 30, 100, 100, false );
+				life.path = ship.path.scale( 0.6 );
+				life.rotation = 30;
+				extraLives.push( life );
+			}
+			
+			window.onresize = function(){
+				canvas.width = document.documentElement.clientWidth;
+				canvas.height = document.documentElement.clientHeight;
+				g = canvas.getContext('2d');
+				bounds.w = canvas.width + 70;
+				bounds.h = canvas.height + 70;
+				console.log( bounds );
+			}
+			
+			var sprites = [];
+			for( var i = 0; i < number_of_asteroids; i++ ){
+				var size = Math.random() * 40 + 10;
+				var s = new Sprite( Math.random() * canvas.width, Math.random() * canvas.height, size, size, bounds );
+				s.rotationalVelocity = Math.random() * 45 + 10;
+				if( Math.random() < 0.5 ){
+					s.rotationalVelocity = - s.rotationalVelocity;
+				}
+				s.velocity = RandomVector( 10, 50 );
+				s.path = asteroidPath.jiggle(25).scale( Math.random() * 0.1 + 0.25 );
+				s.recalcCollisionRadius();
+				s.strokeWidth = 0.6;
+				sprites.push( s );
+			}
+				
+			var lastUpdate = (new Date()).getTime();
+			var framerate = 0;
+				
+			setInterval( function(){
+				// blank entire canvas
+				g.fillStyle = 'rgb(0,0,0)';
+				g.fillRect( 0, 0, canvas.width, canvas.height );
+				
+				for( var i in sprites ){
+					sprites[i].update().draw( g );
+					sprites[i].debug.collision = sprites[i].hitTest( ship, g );
+				}
+				
+				ship.update().draw( g );
+				
+				for( var i in extraLives ){
+					extraLives[i].draw( g );
+				}
+				
+				// frame rate
+				var elapsedTime = (new Date()).getTime() - lastUpdate;
+				lastUpdate += elapsedTime;
+				g.font = '20px Verdana, sans-serif';
+				g.fillStyle = 'rgb(255,255,255)';
+				framerate = framerate * 0.9 + (1000 / elapsedTime) * 0.1;
+				g.fillText( framerate.toFixed(2) + 'fps', 10, 20 );
+			}, 1000.0/60.0 );
+		</script>
+	</body>
+</html>
