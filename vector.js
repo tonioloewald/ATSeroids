@@ -77,9 +77,7 @@ function Segment( p0, p1 ){
 	this.m = dx != 0 ? 1.0 * dy / dx : 0 ;
 	this.b = p0.y - this.m * p0.x;
 	// b = y - mx;
-	
 	// console.log( p0, p1, 'segment: y = ' + this.m + 'x + ' + this.b );
-	
 }
 
 Segment.prototype.intersects = function( otherLine ){

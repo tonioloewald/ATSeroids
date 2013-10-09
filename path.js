@@ -1,7 +1,6 @@
 // Require Vector.js
 
 // Given an SVG path element, create something useful
-
 function Path( pathString ){
 	// <path id="svg_3" d="m203,273l63,-183l66,183l-63,-33l-66,33z" stroke-width="5" stroke="#000000" fill="#FF0000"/>
 	this.points = [];
@@ -47,7 +46,6 @@ Path.prototype.jiggle = function( d ){
 
 Path.prototype.scale = function( s ){
 	var path = new Path();
-	
 	for( var i = 0; i < this.points.length; i++ ){
 		path.points.push(  this.points[i].scale(s) );
 	}
@@ -71,7 +69,6 @@ Path.prototype.normalize = function(){
 	var dy = -( y0 + y1 ) * 0.5;
 	
 	console.log( 'offset: ' + dx + ', ' + dy );
-	
 	for( var i = 0; i < points.length; i++ ){
 		points[i] = points[i].add( dx, dy );
 	}

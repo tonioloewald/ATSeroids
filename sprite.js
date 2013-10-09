@@ -16,9 +16,10 @@ function Sprite( x, y, width, height, wrapBounds ){
 	this.scale = 1.0;
 	this.debug = {};
 	this.recalcCollisionRadius();
-	return 
+	return this;
 }
 
+// Find out the point furthest from the origin and set collision radius to its norm()
 Sprite.prototype.recalcCollisionRadius = function(){
 	var path = this.path;
 	if( path ){
